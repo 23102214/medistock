@@ -1,0 +1,6 @@
+{
+  "name": "MediStock",
+  "description": "Medical Inventory Management Platform featuring role-based JWT authentication, real-time stock alerts, category CRUD, supplier profiles, purchase orders, inventory logs, and analytical reports.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
