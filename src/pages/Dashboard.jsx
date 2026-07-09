@@ -167,15 +167,18 @@ export const Dashboard = () => {
     ];
   }, [batches]);
 
-  // 4. Monthly Purchase Orders Volume Chart (Mock Trends)
-  const purchaseTrendsData = [
-    { name: "Feb", volume: 1500 },
-    { name: "Mar", volume: 3200 },
-    { name: "Apr", volume: 2100 },
-    { name: "May", volume: 4400 },
-    { name: "Jun", volume: 2900 },
-    { name: "Jul", volume: 5100 }
-  ];
+  const purchaseTrendsData = useMemo(() => {
+    const totalsByMonth = purchaseOrders.reduce((acc, order) => {
+      if (!order.orderDate) return acc;
+      const date = new Date(order.orderDate);
+      if (Number.isNaN(date.getTime())) return acc;
+      const key = date.toLocaleString("en-US", { month: "short", year: "2-digit" });
+      acc[key] = (acc[key] || 0) + (Number(order.totalAmount) || 0);
+      return acc;
+    }, {});
+
+    return Object.entries(totalsByMonth).map(([name, volume]) => ({ name, volume }));
+  }, [purchaseOrders]);
 
   // Quick Action: Quarantine Batch (remove expired batch quantity)
   const handleQuarantine = async (batchId) => {
@@ -361,21 +364,27 @@ export const Dashboard = () => {
             <p className="text-[10px] text-slate-400">Total procurement order investment trend</p>
           </div>
           <div className="h-64">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={purchaseTrendsData} margin={{ top: 10, right: 10, left: -20, bottom: 5 }}>
-                <defs>
-                  <linearGradient id="procureGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#0284c7" stopOpacity={0.25} />
-                    <stop offset="95%" stopColor="#0284c7" stopOpacity={0.0} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                <XAxis dataKey="name" tick={{ fontSize: 9 }} />
-                <YAxis tick={{ fontSize: 9 }} />
-                <Tooltip formatter={(value) => `$${value}`} />
-                <Area type="monotone" dataKey="volume" stroke="#0284c7" strokeWidth={2.5} fillOpacity={1} fill="url(#procureGrad)" />
-              </AreaChart>
-            </ResponsiveContainer>
+            {purchaseTrendsData.length > 0 ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={purchaseTrendsData} margin={{ top: 10, right: 10, left: -20, bottom: 5 }}>
+                  <defs>
+                    <linearGradient id="procureGrad" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#0284c7" stopOpacity={0.25} />
+                      <stop offset="95%" stopColor="#0284c7" stopOpacity={0.0} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                  <XAxis dataKey="name" tick={{ fontSize: 9 }} />
+                  <YAxis tick={{ fontSize: 9 }} />
+                  <Tooltip formatter={(value) => `$${value}`} />
+                  <Area type="monotone" dataKey="volume" stroke="#0284c7" strokeWidth={2.5} fillOpacity={1} fill="url(#procureGrad)" />
+                </AreaChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="flex items-center justify-center h-full text-slate-400 text-xs">
+                No purchase orders available to generate procurement trends.
+              </div>
+            )}
           </div>
         </div>
 

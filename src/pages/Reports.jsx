@@ -4,10 +4,12 @@ import { FileBarChart, Download, Loader2, Calendar, FileText, CheckCircle2, Shie
 import { toast } from "react-toastify";
 
 export const Reports = () => {
+  const today = new Date().toISOString().split("T")[0];
+  const monthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split("T")[0];
   // Config States
   const [reportType, setReportType] = useState("INVENTORY");
-  const [startDate, setStartDate] = useState("2026-06-01");
-  const [endDate, setEndDate] = useState("2026-07-03");
+  const [startDate, setStartDate] = useState(monthStart);
+  const [endDate, setEndDate] = useState(today);
   
   // Generation States
   const [isGenerating, setIsGenerating] = useState(false);
@@ -109,31 +111,25 @@ export const Reports = () => {
     }
   };
 
-  // Perform Simulated file compilation & text download
   const handleExport = (format) => {
     if (!previewData) return;
     setDownloadingFormat(format);
 
-    setTimeout(() => {
-      // Build simple CSV string content
-      const headers = Object.keys(previewData.data[0] || {}).join(",");
-      const rows = previewData.data.map((row) => 
-        Object.values(row).map(val => `"${val}"`).join(",")
-      );
-      const csvContent = "data:text/csv;charset=utf-8," + [headers, ...rows].join("\n");
-      const encodedUri = encodeURI(csvContent);
-      
-      // Client-side simulated download
-      const link = document.createElement("a");
-      link.setAttribute("href", encodedUri);
-      link.setAttribute("download", `medistock_${reportType.toLowerCase()}_report_${startDate}_to_${endDate}.${format === "excel" ? "csv" : "txt"}`);
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
+    const headers = Object.keys(previewData.data[0] || {}).join(",");
+    const rows = previewData.data.map((row) => 
+      Object.values(row).map(val => `"${val}"`).join(",")
+    );
+    const csvContent = "data:text/csv;charset=utf-8," + [headers, ...rows].join("\n");
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `medistock_${reportType.toLowerCase()}_report_${startDate}_to_${endDate}.${format === "excel" ? "csv" : "txt"}`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
 
-      toast.success(`Completed file export: successfully downloaded ${reportType} report.`);
-      setDownloadingFormat(null);
-    }, 1800); // 1.8s mock formatting and encoding delay
+    toast.success(`Completed file export: successfully downloaded ${reportType} report.`);
+    setDownloadingFormat(null);
   };
 
   return (

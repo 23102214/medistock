@@ -1,6 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import api from "../services/api";
-import { mockDb } from "../utils/mockDb";
 
 const AuthContext = createContext(null);
 
@@ -13,14 +12,12 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     const initAuth = async () => {
       const storedToken = localStorage.getItem("medistock_token");
+      const storedUser = localStorage.getItem("medistock_user");
       if (storedToken) {
-        try {
-          // Set temporary token to let interceptor attach it
-          setToken(storedToken);
-          const response = await api.get("/api/auth/me");
-          setUser(response.data?.data || response.data);
-        } catch (error) {
-          console.error("Failed to restore session:", error);
+        setToken(storedToken);
+        if (storedUser) {
+          setUser(JSON.parse(storedUser));
+        } else {
           logout();
         }
       }
@@ -37,12 +34,17 @@ export const AuthProvider = ({ children }) => {
       const authData = response.data?.data || response.data;
       const jwtToken = authData.token;
       const loggedUser = {
+        id: authData.id,
         username: authData.username,
+        email: authData.email,
         fullName: authData.fullName,
         role: authData.role,
+        status: authData.status,
+        joinedDate: authData.joinedDate,
       };
-      
+
       localStorage.setItem("medistock_token", jwtToken);
+      localStorage.setItem("medistock_user", JSON.stringify(loggedUser));
       setToken(jwtToken);
       setUser(loggedUser);
       
@@ -57,6 +59,7 @@ export const AuthProvider = ({ children }) => {
 
   const logout = () => {
     localStorage.removeItem("medistock_token");
+    localStorage.removeItem("medistock_user");
     setToken(null);
     setUser(null);
     setLoading(false);
@@ -91,20 +94,16 @@ export const AuthProvider = ({ children }) => {
 
   const updateProfile = async (profileData) => {
     try {
-      // In mock, admin can update their profile or user profile
-      const users = mockDb.getUsers();
-      const updatedUsers = users.map((u) => {
-        if (u.id === user.id) {
-          return { ...u, ...profileData };
-        }
-        return u;
-      });
-      mockDb.saveUsers(updatedUsers);
-      setUser({ ...user, ...profileData });
-      mockDb.addSystemLog(user.username, "PROFILE_UPDATE", "Updated own user profile information");
+      if (!user?.id) {
+        return { success: false, error: "Active user profile is missing a backend id." };
+      }
+      const response = await api.put(`/api/users/${user.id}`, profileData);
+      const updatedUser = response.data?.data || response.data;
+      localStorage.setItem("medistock_user", JSON.stringify(updatedUser));
+      setUser(updatedUser);
       return { success: true };
     } catch (error) {
-      return { success: false, error: "Failed to update profile details" };
+      return { success: false, error: error.response?.data?.message || "Failed to update profile details" };
     }
   };
 

@@ -83,7 +83,7 @@ export const PurchaseOrders = () => {
     resolver: yupResolver(poSchema),
     defaultValues: {
       supplierId: "",
-      items: [{ medicineId: "", quantity: 100, unitPrice: 5.00 }],
+      items: [{ medicineId: "", quantity: "", unitPrice: "" }],
     },
   });
 
@@ -115,8 +115,12 @@ export const PurchaseOrders = () => {
         
         // Setup default values and open modal
         reset({
-          supplierId: med.supplierId,
-          items: [{ medicineId: med.id, quantity: med.minStock * 2, unitPrice: med.price * 0.6 }], // pre-fill bulk order
+          supplierId: med.supplierId || "",
+          items: [{
+            medicineId: med.id,
+            quantity: med.minStock ? med.minStock * 2 : "",
+            unitPrice: med.price ?? "",
+          }],
         });
         setIsCreateOpen(true);
         toast.info(`Pre-configured reorder parameters for ${med.name}`);
@@ -130,11 +134,16 @@ export const PurchaseOrders = () => {
     const firstItem = data.items[0];
     const med = medicines.find((m) => m.id === firstItem.medicineId);
 
+    if (!sup || !med) {
+      toast.error("Select a supplier and medicine from backend records before creating a purchase order.");
+      return;
+    }
+
     try {
       const created = await postData("/api/purchase-orders", {
         supplierId: data.supplierId,
-        supplierName: sup ? sup.name : "Unknown Supplier",
-        medicineName: med ? med.name : "Unknown Drug",
+        supplierName: sup.name,
+        medicineName: med.name,
         quantity: Number(firstItem.quantity),
         unitPrice: Number(firstItem.unitPrice),
         createdBy: user?.username || "system",
@@ -144,7 +153,7 @@ export const PurchaseOrders = () => {
       setIsCreateOpen(false);
       reset({
         supplierId: "",
-        items: [{ medicineId: "", quantity: 100, unitPrice: 5.00 }],
+        items: [{ medicineId: "", quantity: "", unitPrice: "" }],
       });
     } catch (error) {
       toast.error(error.response?.data?.message || "Failed to create purchase order");
@@ -223,7 +232,7 @@ export const PurchaseOrders = () => {
           onClick={() => {
             reset({
               supplierId: "",
-              items: [{ medicineId: "", quantity: 100, unitPrice: 5.00 }],
+              items: [{ medicineId: "", quantity: "", unitPrice: "" }],
             });
             setIsCreateOpen(true);
           }}
@@ -285,7 +294,7 @@ export const PurchaseOrders = () => {
               <span className="text-xs font-extrabold text-slate-400 uppercase tracking-wider">Procured Medication Lots</span>
               <button
                 type="button"
-                onClick={() => append({ medicineId: "", quantity: 100, unitPrice: 5.00 })}
+                onClick={() => append({ medicineId: "", quantity: "", unitPrice: "" })}
                 className="px-3 py-1.5 text-[10px] font-bold text-brand bg-brand-light hover:bg-brand hover:text-white rounded-lg transition-all cursor-pointer"
               >
                 + Add Another Drug

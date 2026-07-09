@@ -37,7 +37,6 @@ export const Profile = () => {
       email: data.email,
     };
     
-    // Simulating profile update via auth context
     const res = await updateProfile(updatePayload);
     if (res.success) {
       toast.success("Profile parameters updated successfully!");
@@ -60,7 +59,7 @@ export const Profile = () => {
         {/* Profile Card */}
         <div className="bg-white rounded-2xl border border-slate-100 p-6 flex flex-col items-center text-center shadow-sm h-fit">
           <div className="w-24 h-24 rounded-full bg-brand text-white font-extrabold flex items-center justify-center border-4 border-brand-light text-3xl shadow-md uppercase">
-            {user?.fullName?.substring(0, 2) || "JD"}
+            {user?.fullName?.substring(0, 2) || "--"}
           </div>
           
           <h4 className="text-lg font-bold font-display mt-4 text-slate-800">{user?.fullName}</h4>
@@ -75,7 +74,7 @@ export const Profile = () => {
             </div>
             <div className="flex justify-between items-center text-slate-500">
               <span className="font-semibold">System Joined:</span>
-              <span>{user?.joinedDate || "2025-01-15"}</span>
+              <span>{user?.joinedDate || "Not available"}</span>
             </div>
             <div className="flex justify-between items-center text-slate-500">
               <span className="font-semibold">System Auth:</span>

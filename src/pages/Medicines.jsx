@@ -47,8 +47,8 @@ export const Medicines = () => {
         ...medicine,
         minStock: medicine.minStock ?? medicine.minStockThreshold ?? 0,
         currentStock: medicine.currentStock ?? 0,
-        categoryName: medicine.categoryName ?? medicine.category ?? "Uncategorized",
-        supplierName: medicine.supplierName ?? "Unknown Wholesaler",
+        categoryName: medicine.categoryName ?? medicine.category ?? "",
+        supplierName: medicine.supplierName ?? "",
       })));
     } catch (error) {
       toast.error(error.response?.data?.message || "Failed to load medicines");
@@ -103,12 +103,16 @@ export const Medicines = () => {
   const onSubmit = async (data) => {
     const cat = categories.find((c) => c.id === data.categoryId);
     const sup = suppliers.find((s) => s.id === data.supplierId);
+    if (!cat || !sup) {
+      toast.error("Select a category and supplier from backend records before saving a medicine.");
+      return;
+    }
 
     const payload = {
       name: data.name,
       genericName: data.name,
-      category: cat ? cat.name : "Uncategorized",
-      supplierName: sup ? sup.name : "Unknown Wholesaler",
+      category: cat.name,
+      supplierName: sup.name,
       price: Number(data.price),
       minStockThreshold: Number(data.minStock),
       description: data.description,

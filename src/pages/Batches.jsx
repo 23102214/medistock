@@ -127,13 +127,17 @@ export const Batches = () => {
 
   const onSubmit = async (data) => {
     const med = medicines.find((m) => m.id === data.medicineId);
+    if (!med) {
+      toast.error("Select a medicine from backend records before saving a batch.");
+      return;
+    }
 
     const formattedData = {
       ...data,
       quantity: Number(data.quantity),
       purchasePrice: Number(data.purchasePrice),
       sellingPrice: Number(data.sellingPrice),
-      medicineName: med ? med.name : "Unknown Medication",
+      medicineName: med.name,
     };
 
     try {

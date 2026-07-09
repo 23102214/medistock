@@ -55,7 +55,6 @@ export const DashboardLayout = ({ children }) => {
 
   useEffect(() => {
     loadNotifications();
-    // Refresh alerts every 10 seconds to keep track of new mock stock outputs
     const timer = setInterval(() => {
       loadNotifications();
     }, 10000);
@@ -483,14 +482,14 @@ export const DashboardLayout = ({ children }) => {
               className="flex items-center gap-2.5 pl-3 border-l border-slate-100 cursor-pointer group"
             >
               <div className="w-9 h-9 rounded-full bg-teal-500 text-white font-bold flex items-center justify-center border border-teal-400 shadow-sm overflow-hidden relative">
-                <span className="text-sm font-semibold">{user?.fullName?.substring(0, 2).toUpperCase() || "JD"}</span>
+                <span className="text-sm font-semibold">{user?.fullName?.substring(0, 2).toUpperCase() || "--"}</span>
               </div>
               <div className="hidden md:block text-left leading-tight">
                 <h4 className="text-xs font-bold text-slate-700 dark:text-slate-200 group-hover:text-brand transition-colors">
-                  {user?.fullName || "Guest User"}
+                  {user?.fullName || "Not signed in"}
                 </h4>
                 <p className="text-[10px] text-slate-400 font-medium uppercase tracking-wide">
-                  {user?.role || "STAFF"}
+                  {user?.role || "No role"}
                 </p>
               </div>
             </div>

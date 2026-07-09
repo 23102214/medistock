@@ -26,7 +26,7 @@ public class AuthServiceImpl implements AuthService {
     @Override
     @Transactional(readOnly = true)
     public JwtResponse authenticateUser(LoginRequest loginRequest) {
-        User user = userRepository.findByUsername(loginRequest.getUsername())
+        User user = userRepository.findByUsernameOrEmail(loginRequest.getUsername(), loginRequest.getUsername())
                 .orElseThrow(() -> new ResourceNotFoundException("Invalid credentials"));
 
         if (!passwordEncoder.matches(loginRequest.getPassword(), user.getPassword())) {
@@ -41,10 +41,14 @@ public class AuthServiceImpl implements AuthService {
         String mockToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI" + user.getUsername() + "\"}";
 
         return JwtResponse.builder()
+                .id(user.getId())
                 .token(mockToken)
                 .username(user.getUsername())
+                .email(user.getEmail())
                 .fullName(user.getFullName())
                 .role(user.getRole().name())
+                .status(user.getStatus())
+                .joinedDate(user.getJoinedDate().toString())
                 .build();
     }
 
