@@ -252,13 +252,15 @@ export const PurchaseOrders = () => {
         searchPlaceholder="Search PO codes..."
         filterOptions={[{ key: "status", label: "Status", options: ["PENDING", "APPROVED", "DELIVERED", "CANCELLED"] }]}
         actions={(row) => (
-          <button
-            onClick={() => setSelectedPo(row)}
-            className="p-1.5 text-slate-500 hover:text-brand bg-slate-50 hover:bg-brand/10 border border-slate-100 rounded-lg transition-all cursor-pointer flex items-center gap-1 text-xs font-bold"
-          >
-            <Eye className="w-3.5 h-3.5" />
-            Invoice
-          </button>
+          user?.role === "ADMIN" && (
+            <button
+              onClick={() => setSelectedPo(row)}
+              className="p-1.5 text-slate-500 hover:text-brand bg-slate-50 hover:bg-brand/10 border border-slate-100 rounded-lg transition-all cursor-pointer flex items-center gap-1 text-xs font-bold"
+            >
+              <Eye className="w-3.5 h-3.5" />
+              Invoice
+            </button>
+          )
         )}
       />
 

@@ -147,7 +147,7 @@ export const Batches = () => {
         if (difference !== 0) {
           await postData("/api/transactions", {
             date: new Date().toISOString().split("T")[0],
-            type: difference > 0 ? "STOCK_IN" : "STOCK_OUT",
+            type: "ADJUSTMENT",
             medicineId: formattedData.medicineId,
             quantity: Math.abs(difference),
             batchNumber: formattedData.batchNumber,
@@ -159,7 +159,7 @@ export const Batches = () => {
         await postData("/api/batches", formattedData);
         await postData("/api/transactions", {
           date: new Date().toISOString().split("T")[0],
-          type: "STOCK_IN",
+          type: "PURCHASE",
           medicineId: formattedData.medicineId,
           quantity: formattedData.quantity,
           batchNumber: formattedData.batchNumber,
@@ -187,7 +187,7 @@ export const Batches = () => {
         if (bat) {
           await postData("/api/transactions", {
             date: new Date().toISOString().split("T")[0],
-            type: "STOCK_OUT",
+            type: "ADJUSTMENT",
             medicineId: bat.medicineId,
             quantity: bat.quantity,
             batchNumber: bat.batchNumber,

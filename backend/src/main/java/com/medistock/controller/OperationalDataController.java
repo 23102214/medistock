@@ -21,6 +21,24 @@ public class OperationalDataController {
     private final JdbcTemplate jdbcTemplate;
     private final NamedParameterJdbcTemplate namedJdbcTemplate;
 
+    // Override: list all medicines with live stock calculation from batches + joined category/supplier names
+    @GetMapping("/api/medicines")
+    public ResponseEntity<ApiResponse<List<Map<String, Object>>>> getMedicines() {
+        return ok("Medicines loaded", query("""
+                select m.id, m.name, m.generic_name as "genericName",
+                       m.category_id as "categoryId", c.name as "categoryName",
+                       m.supplier_id as "supplierId", s.name as "supplierName",
+                       m.description, m.min_stock_threshold as "minStockThreshold",
+                       m.min_stock_threshold as "minStock",
+                       coalesce((select sum(b.quantity) from medicine_batches b where b.medicine_id = m.id), 0) as "currentStock",
+                       m.price, m.status, m.created_at as "createdAt"
+                from medicines m
+                left join categories c on c.id = m.category_id
+                left join suppliers s on s.id = m.supplier_id
+                order by m.name
+                """));
+    }
+
     @GetMapping("/api/categories")
     public ResponseEntity<ApiResponse<List<Map<String, Object>>>> getCategories() {
         return ok("Categories loaded", query("""
@@ -100,10 +118,10 @@ public class OperationalDataController {
     public ResponseEntity<ApiResponse<List<Map<String, Object>>>> getBatches() {
         return ok("Batches loaded", query("""
                 select b.id, b.medicine_id as "medicineId", m.name as "medicineName",
-                       b.batch_number as "batchNumber", b.manufacturing_date as "manufacturingDate",
+                       b.batch_number as "batchNumber",
                        b.expiry_date as "expiryDate", b.quantity, b.purchase_price as "purchasePrice",
                        b.selling_price as "sellingPrice", b.created_at as "createdAt"
-                from batches b
+                from medicine_batches b
                 left join medicines m on m.id = b.medicine_id
                 order by b.expiry_date
                 """));
@@ -112,13 +130,13 @@ public class OperationalDataController {
     @PostMapping("/api/batches")
     public ResponseEntity<ApiResponse<Map<String, Object>>> createBatch(@RequestBody Map<String, Object> body) {
         Map<String, Object> created = queryOne("""
-                insert into batches (medicine_id, batch_number, manufacturing_date, expiry_date, quantity, purchase_price, selling_price)
-                values (cast(:medicineId as uuid), :batchNumber, cast(:manufacturingDate as date), cast(:expiryDate as date), :quantity, :purchasePrice, :sellingPrice)
+                insert into medicine_batches (medicine_id, batch_number, expiry_date, quantity, purchase_price, selling_price)
+                values (cast(:medicineId as uuid), :batchNumber, cast(:expiryDate as date), :quantity, :purchasePrice, :sellingPrice)
                 returning id, medicine_id as "medicineId", batch_number as "batchNumber",
-                          manufacturing_date as "manufacturingDate", expiry_date as "expiryDate",
+                          expiry_date as "expiryDate",
                           quantity, purchase_price as "purchasePrice", selling_price as "sellingPrice", created_at as "createdAt"
                 """, params(body));
-        refreshMedicineStock((UUID) created.get("medicineId"));
+        refreshMedicineStock(created.get("medicineId"));
         return created("Batch created", created);
     }
 
@@ -126,24 +144,24 @@ public class OperationalDataController {
     public ResponseEntity<ApiResponse<Map<String, Object>>> updateBatch(@PathVariable UUID id, @RequestBody Map<String, Object> body) {
         MapSqlParameterSource params = params(body).addValue("id", id);
         Map<String, Object> updated = queryOne("""
-                update batches
-                set medicine_id = cast(:medicineId as uuid), batch_number = :batchNumber, manufacturing_date = cast(:manufacturingDate as date),
+                update medicine_batches
+                set medicine_id = cast(:medicineId as uuid), batch_number = :batchNumber,
                     expiry_date = cast(:expiryDate as date), quantity = :quantity, purchase_price = :purchasePrice, selling_price = :sellingPrice
                 where id = :id
                 returning id, medicine_id as "medicineId", batch_number as "batchNumber",
-                          manufacturing_date as "manufacturingDate", expiry_date as "expiryDate",
+                          expiry_date as "expiryDate",
                           quantity, purchase_price as "purchasePrice", selling_price as "sellingPrice", created_at as "createdAt"
                 """, params);
-        refreshMedicineStock((UUID) updated.get("medicineId"));
+        refreshMedicineStock(updated.get("medicineId"));
         return ok("Batch updated", updated);
     }
 
     @DeleteMapping("/api/batches/{id}")
     public ResponseEntity<ApiResponse<Void>> deleteBatch(@PathVariable UUID id) {
-        List<Map<String, Object>> rows = jdbcTemplate.queryForList("select medicine_id from batches where id = ?", id);
-        jdbcTemplate.update("delete from batches where id = ?", id);
+        List<Map<String, Object>> rows = jdbcTemplate.queryForList("select medicine_id from medicine_batches where id = ?", id);
+        jdbcTemplate.update("delete from medicine_batches where id = ?", id);
         if (!rows.isEmpty()) {
-            refreshMedicineStock((UUID) rows.get(0).get("medicine_id"));
+            refreshMedicineStock(rows.get(0).get("medicine_id"));
         }
         return ResponseEntity.ok(ApiResponse.success("Batch deleted", null));
     }
@@ -151,22 +169,30 @@ public class OperationalDataController {
     @GetMapping("/api/transactions")
     public ResponseEntity<ApiResponse<List<Map<String, Object>>>> getTransactions() {
         return ok("Transactions loaded", query("""
-                select t.id, t.date, t.type, t.medicine_id as "medicineId", m.name as "medicineName",
-                       t.quantity, t.batch_number as "batchNumber", t.remarks, t.created_at as "createdAt"
-                from transactions t
+                select t.id, t.transaction_date as "date", t.transaction_type as "type", t.medicine_id as "medicineId", m.name as "medicineName",
+                       t.quantity, b.batch_number as "batchNumber", t.remarks, t.transaction_date as "createdAt"
+                from inventory_transactions t
                 left join medicines m on m.id = t.medicine_id
-                order by t.date desc, t.created_at desc
+                left join medicine_batches b on b.id = t.batch_id
+                order by t.transaction_date desc
                 """));
     }
 
     @PostMapping("/api/transactions")
     public ResponseEntity<ApiResponse<Map<String, Object>>> createTransaction(@RequestBody Map<String, Object> body) {
         Map<String, Object> created = queryOne("""
-                insert into transactions (date, type, medicine_id, quantity, batch_number, remarks)
-                values (coalesce(cast(:date as date), current_date), :type, cast(:medicineId as uuid), :quantity, :batchNumber, :remarks)
-                returning id, date, type, medicine_id as "medicineId", quantity, batch_number as "batchNumber", remarks, created_at as "createdAt"
+                insert into inventory_transactions (transaction_date, transaction_type, medicine_id, batch_id, quantity, remarks)
+                values (
+                    coalesce(cast(:date as timestamp), current_timestamp),
+                    :type,
+                    cast(:medicineId as uuid),
+                    (select id from medicine_batches where batch_number = :batchNumber and medicine_id = cast(:medicineId as uuid) limit 1),
+                    :quantity,
+                    :remarks
+                )
+                returning id, transaction_date as "date", transaction_type as "type", medicine_id as "medicineId", quantity, remarks
                 """, params(body));
-        refreshMedicineStock((UUID) created.get("medicineId"));
+        refreshMedicineStock(created.get("medicineId"));
         return created("Transaction recorded", created);
     }
 
@@ -255,11 +281,10 @@ public class OperationalDataController {
         return params;
     }
 
-    private void refreshMedicineStock(UUID medicineId) {
-        jdbcTemplate.update("""
-                update medicines
-                set current_stock = coalesce((select sum(quantity) from batches where medicine_id = ?), 0)
-                where id = ?
-                """, medicineId, medicineId);
+    // Stock is calculated live from medicine_batches via subquery in GET /api/medicines.
+    // This method is kept as a no-op to avoid breaking callers; no current_stock column exists in DB.
+    private void refreshMedicineStock(Object medicineIdObj) {
+        // no-op: stock is calculated dynamically
     }
 }
+

@@ -28,7 +28,7 @@ public class Medicine {
     @Column(nullable = false, length = 150)
     private String name;
 
-    @Transient
+    @Column(name = "generic_name", length = 150)
     private String genericName;
 
     @Column(name = "category_id")
@@ -46,18 +46,14 @@ public class Medicine {
     @Column(columnDefinition = "TEXT")
     private String description;
 
-    @Column(name = "min_stock", nullable = false)
+    @Column(name = "min_stock_threshold", nullable = false)
     @Builder.Default
     private Integer minStockThreshold = 10;
-
-    @Column(name = "current_stock", nullable = false)
-    @Builder.Default
-    private Integer currentStock = 0;
 
     @Column(nullable = false, precision = 12, scale = 2)
     private BigDecimal price;
 
-    @Transient
+    @Column(length = 20, nullable = false)
     @Builder.Default
     private String status = "ACTIVE";
 

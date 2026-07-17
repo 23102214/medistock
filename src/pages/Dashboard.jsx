@@ -231,23 +231,25 @@ export const Dashboard = () => {
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
-          <button
-            onClick={loadDashboardData}
-            className="p-2.5 rounded-xl border border-slate-200 text-slate-500 hover:bg-slate-50 hover:text-brand bg-white dark:bg-slate-900 dark:border-slate-800 transition-all cursor-pointer flex items-center gap-1.5 text-xs font-semibold"
-          >
-            <RefreshCw className="w-4 h-4" />
-            Synchronize DB
-          </button>
-          
-          <button
-            onClick={() => navigate("/orders")}
-            className="px-4 py-2.5 rounded-xl bg-brand text-white text-xs font-extrabold shadow-md shadow-brand/10 hover:bg-brand-hover hover:shadow-brand/20 transition-all flex items-center gap-1.5 cursor-pointer"
-          >
-            <PlusCircle className="w-4 h-4" />
-            New Purchase Order
-          </button>
-        </div>
+        {user?.role !== "STAFF" && (
+          <div className="flex items-center gap-2">
+            <button
+              onClick={loadDashboardData}
+              className="p-2.5 rounded-xl border border-slate-200 text-slate-500 hover:bg-slate-50 hover:text-brand bg-white dark:bg-slate-900 dark:border-slate-800 transition-all cursor-pointer flex items-center gap-1.5 text-xs font-semibold"
+            >
+              <RefreshCw className="w-4 h-4" />
+              Synchronize DB
+            </button>
+            
+            <button
+              onClick={() => navigate("/orders")}
+              className="px-4 py-2.5 rounded-xl bg-brand text-white text-xs font-extrabold shadow-md shadow-brand/10 hover:bg-brand-hover hover:shadow-brand/20 transition-all flex items-center gap-1.5 cursor-pointer"
+            >
+              <PlusCircle className="w-4 h-4" />
+              New Purchase Order
+            </button>
+          </div>
+        )}
       </div>
 
       {/* KPI GRID STATS */}

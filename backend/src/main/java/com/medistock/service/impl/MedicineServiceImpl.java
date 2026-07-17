@@ -31,7 +31,9 @@ public class MedicineServiceImpl implements MedicineService {
                 .name(dto.getName())
                 .genericName(dto.getGenericName())
                 .category(dto.getCategory())
+                .categoryId(dto.getCategoryId())
                 .supplierName(dto.getSupplierName())
+                .supplierId(dto.getSupplierId())
                 .description(dto.getDescription())
                 .minStockThreshold(dto.getMinStockThreshold())
                 .price(dto.getPrice())
@@ -51,7 +53,9 @@ public class MedicineServiceImpl implements MedicineService {
         existing.setName(dto.getName());
         existing.setGenericName(dto.getGenericName());
         existing.setCategory(dto.getCategory());
+        existing.setCategoryId(dto.getCategoryId());
         existing.setSupplierName(dto.getSupplierName());
+        existing.setSupplierId(dto.getSupplierId());
         existing.setDescription(dto.getDescription());
         existing.setMinStockThreshold(dto.getMinStockThreshold());
         existing.setPrice(dto.getPrice());
@@ -118,7 +122,9 @@ public class MedicineServiceImpl implements MedicineService {
                 .name(medicine.getName())
                 .genericName(medicine.getGenericName())
                 .category(medicine.getCategory())
+                .categoryId(medicine.getCategoryId())
                 .supplierName(medicine.getSupplierName())
+                .supplierId(medicine.getSupplierId())
                 .description(medicine.getDescription())
                 .minStockThreshold(medicine.getMinStockThreshold())
                 .price(medicine.getPrice())

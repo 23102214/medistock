@@ -49,12 +49,12 @@ public class MedicineController {
         return ResponseEntity.ok(ApiResponse.success("Medicine loaded", medicine));
     }
 
-    @GetMapping
-    @Operation(summary = "List all catalogue items")
-    public ResponseEntity<ApiResponse<List<MedicineDto>>> getAllMedicines() {
-        List<MedicineDto> list = medicineService.getAllMedicines();
-        return ResponseEntity.ok(ApiResponse.success("Catalogue loaded", list));
-    }
+    // @GetMapping
+    // @Operation(summary = "List all catalogue items")
+    // public ResponseEntity<ApiResponse<List<MedicineDto>>> getAllMedicines() {
+    //     List<MedicineDto> list = medicineService.getAllMedicines();
+    //     return ResponseEntity.ok(ApiResponse.success("Catalogue loaded", list));
+    // }
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")

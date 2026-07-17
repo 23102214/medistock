@@ -43,13 +43,17 @@ export const Medicines = () => {
       ]);
       setCategories(categoryRows);
       setSuppliers(supplierRows);
-      setMedicines(medicineRows.map((medicine) => ({
-        ...medicine,
-        minStock: medicine.minStock ?? medicine.minStockThreshold ?? 0,
-        currentStock: medicine.currentStock ?? 0,
-        categoryName: medicine.categoryName ?? medicine.category ?? "",
-        supplierName: medicine.supplierName ?? "",
-      })));
+      setMedicines(medicineRows.map((medicine) => {
+        const catName = categoryRows.find(c => c.id === medicine.categoryId)?.name || medicine.categoryName || medicine.category || "";
+        const supName = supplierRows.find(s => s.id === medicine.supplierId)?.name || medicine.supplierName || "";
+        return {
+          ...medicine,
+          minStock: medicine.minStock ?? medicine.minStockThreshold ?? 0,
+          currentStock: medicine.currentStock ?? 0,
+          categoryName: catName,
+          supplierName: supName,
+        };
+      }));
     } catch (error) {
       toast.error(error.response?.data?.message || "Failed to load medicines");
     }
@@ -112,7 +116,9 @@ export const Medicines = () => {
       name: data.name,
       genericName: data.name,
       category: cat.name,
+      categoryId: cat.id,
       supplierName: sup.name,
+      supplierId: sup.id,
       price: Number(data.price),
       minStockThreshold: Number(data.minStock),
       description: data.description,

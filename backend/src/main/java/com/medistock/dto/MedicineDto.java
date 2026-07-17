@@ -32,6 +32,10 @@ public class MedicineDto {
     @NotBlank(message = "Supplier name is required")
     private String supplierName;
 
+    private UUID categoryId;
+
+    private UUID supplierId;
+
     private String description;
 
     @NotNull(message = "Minimum stock threshold is required")
